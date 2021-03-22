@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:WpfMandelbrotDrawer"
         xmlns:vm="clr-namespace:WpfMandelbrotDrawer.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow"
+        Title="Mandelbrot Drawer"
         SizeToContent="WidthAndHeight"
         Loaded="MandelWindow_Loaded"
         x:Name="MandelWindow"
