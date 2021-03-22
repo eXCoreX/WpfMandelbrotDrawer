@@ -154,6 +154,7 @@ namespace WpfMandelbrotDrawer.ViewModels
         public RelayCommand RenderCommand { get; private set; }
 
         public RelayCommand ResetEverythingCommand { get; private set; }
+
         public RelayCommand ResetViewCommand { get; private set; }
 
         private WriteableBitmap RenderSet()
