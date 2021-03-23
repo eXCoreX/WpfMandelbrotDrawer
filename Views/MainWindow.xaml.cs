@@ -80,10 +80,10 @@ namespace WpfMandelbrotDrawer.Views
                 var oldD = dc.BottomEdge;
                 var oldU = dc.UpperEdge;
 
-                var newL = oldL + (oldR - oldL) * TopLeft.X / dc.CurrentBitmap.PixelWidth;
-                var newR = oldL + (oldR - oldL) * DownRight.X / dc.CurrentBitmap.PixelWidth;
-                var newU = oldU - (oldU - oldD) * TopLeft.Y / dc.CurrentBitmap.PixelHeight;
-                var newD = oldU - (oldU - oldD) * DownRight.Y / dc.CurrentBitmap.PixelHeight;
+                var newL = oldL + (oldR - oldL) * TopLeft.X / dc.CurrentBitmap.PixelWidth * MandelbrotViewModel.DpiScale;
+                var newR = oldL + (oldR - oldL) * DownRight.X / dc.CurrentBitmap.PixelWidth * MandelbrotViewModel.DpiScale;
+                var newU = oldU - (oldU - oldD) * TopLeft.Y / dc.CurrentBitmap.PixelHeight * MandelbrotViewModel.DpiScale;
+                var newD = oldU - (oldU - oldD) * DownRight.Y / dc.CurrentBitmap.PixelHeight * MandelbrotViewModel.DpiScale;
                 dc.LeftEdge = newL;
                 dc.RightEdge = newR;
                 dc.UpperEdge = newU;

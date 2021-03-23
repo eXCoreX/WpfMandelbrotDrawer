@@ -553,3 +553,4 @@ $RECYCLE.BIN/
 # Fody - auto-generated XML schema
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,csharp,visualstudio
+.DS_Store

@@ -19,6 +19,7 @@ namespace WpfMandelbrotDrawer.ViewModels
     {
         private static readonly int renderWidth = 1600;
         private static readonly int renderHeight = 900;
+        public static readonly double DpiScale = VisualTreeHelper.GetDpi(new ContainerVisual()).DpiScaleX;
 
         private readonly MandelbrotRenderer mRenderer = new MandelbrotRenderer(renderWidth, renderHeight);
 
@@ -27,7 +28,7 @@ namespace WpfMandelbrotDrawer.ViewModels
         {
             get
             {
-                return _CurrentBitmap ?? new WriteableBitmap(1, 1, 96, 96, PixelFormats.Bgra32, null);
+                return _CurrentBitmap ?? new WriteableBitmap(1, 1, 96 * DpiScale, 96 * DpiScale, PixelFormats.Bgra32, null);
             }
             private set
             {
@@ -159,7 +160,7 @@ namespace WpfMandelbrotDrawer.ViewModels
 
         private WriteableBitmap RenderSet()
         {
-            WriteableBitmap bmp = new WriteableBitmap(renderWidth, renderHeight, 96, 96, PixelFormats.Bgra32, null);
+            WriteableBitmap bmp = new WriteableBitmap(renderWidth, renderHeight, 96 * DpiScale, 96 * DpiScale, PixelFormats.Bgra32, null);
 
             byte[] pixelArray = mRenderer.RenderSet(LeftEdge, RightEdge, UpperEdge, BottomEdge, Subdivision, MaxIters);
 
@@ -184,15 +185,14 @@ namespace WpfMandelbrotDrawer.ViewModels
         static MandelbrotViewModel()
         {
             var rect = SystemParameters.WorkArea;
-            renderWidth = (int)(rect.Width * 0.8);
+            renderWidth = (int)(rect.Width * 0.8 * DpiScale);
             renderHeight = renderWidth * 9 / 16;
         }
 
         public MandelbrotViewModel()
         {
-            
             mRenderer = new MandelbrotRenderer(renderWidth, renderHeight);
-            CurrentBitmap = new WriteableBitmap(renderWidth, renderHeight, 96, 96, PixelFormats.Bgra32, null);
+            CurrentBitmap = new WriteableBitmap(renderWidth, renderHeight, 96 * DpiScale, 96 * DpiScale, PixelFormats.Bgra32, null);
             var pixels = from x in Enumerable.Range(0, renderWidth * renderHeight)
                          from x2 in new byte[] { 0x00, 0xFF, 0x00, 0xFF }
                          select x2;
