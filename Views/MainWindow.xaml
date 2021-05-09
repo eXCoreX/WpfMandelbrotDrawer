@@ -3,83 +3,83 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WpfMandelbrotDrawer"
         xmlns:vm="clr-namespace:WpfMandelbrotDrawer.ViewModels"
         mc:Ignorable="d"
         Title="Mandelbrot Drawer"
         SizeToContent="WidthAndHeight"
         Loaded="MandelWindow_Loaded"
-        x:Name="MandelWindow"
         d:DataContext="{d:DesignInstance Type=vm:MandelbrotViewModel, IsDesignTimeCreatable=True}">
     <Window.DataContext>
-        <vm:MandelbrotViewModel/>
+        <vm:MandelbrotViewModel />
     </Window.DataContext>
     <Grid
-        x:Name="outerGrid"
+        x:Name="OuterGrid"
         MouseDown="Image_MouseDown"
         MouseUp="Image_MouseUp"
         MouseMove="Image_MouseMove"
         Background="Transparent">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" MinWidth="100"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*" MinWidth="100"/>
+            <ColumnDefinition Width="Auto" MinWidth="100" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" MinWidth="100" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" MinHeight="200"/>
+            <RowDefinition Height="*" MinHeight="200" />
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Vertical" Grid.Column="3" Height="Auto">
+        <StackPanel Orientation="Vertical" Grid.Column="2" Height="Auto">
             <TextBlock Text="Max iterations" Margin="2,2,2,2" />
             <TextBox Text="{Binding MaxIters}" Margin="2,2,2,2" />
             <TextBlock Text="Subdivision" Margin="2,2,2,2" />
-            <TextBox Text="{Binding Subdivision}"  Margin="2,2,2,2" />
+            <TextBox Text="{Binding Subdivision}" Margin="2,2,2,2" />
             <TextBlock Text="X bounds" Margin="2,2,2,2" />
             <StackPanel Orientation="Vertical">
-                <TextBox Text="{Binding LeftEdge, StringFormat=\{0:F6\}}"  Margin="2,2,2,2" MinWidth="30"/>
-                <TextBox Text="{Binding RightEdge, StringFormat=\{0:F6\}}" Margin="2,2,2,2" MinWidth="30"/>
+                <TextBox Text="{Binding LeftEdge, StringFormat=\{0:F10\}}" Margin="2,2,2,2" MinWidth="30" />
+                <TextBox Text="{Binding RightEdge, StringFormat=\{0:F10\}}" Margin="2,2,2,2" MinWidth="30" />
             </StackPanel>
             <TextBlock Text="Y bounds" Margin="2,2,2,2" />
             <StackPanel Orientation="Vertical">
-                <TextBox Text="{Binding UpperEdge, StringFormat=\{0:F6\}}" Margin="2,2,2,2" MinWidth="30"/>
-                <TextBox Text="{Binding BottomEdge, StringFormat=\{0:F6\}}" Margin="2,2,2,2" MinWidth="30"/>
+                <TextBox Text="{Binding UpperEdge, StringFormat=\{0:F10\}}" Margin="2,2,2,2" MinWidth="30" />
+                <TextBox Text="{Binding BottomEdge, StringFormat=\{0:F10\}}" Margin="2,2,2,2" MinWidth="30" />
             </StackPanel>
-            <Button 
-                Content="Reset Everything" 
+            <Button
+                Content="Reset Everything"
                 Command="{Binding ResetEverythingCommand}"
                 Margin="2,2,2,2"
-                Height="Auto"/>
-            <Button 
-                Content="Reset View" 
+                Height="Auto" />
+            <Button
+                Content="Reset View"
                 Command="{Binding ResetViewCommand}"
                 Margin="2,2,2,2"
-                Height="Auto"/>
-            <ComboBox Margin="2,2,2,2" SelectedValue="{Binding MappingFuncString, Mode=TwoWay}" SelectedValuePath="Content">
-                <ComboBoxItem Content="Squareroot"/>
-                <ComboBoxItem Content="Logarithm"/>
-                <ComboBoxItem Content="Linear"/>
-                <ComboBoxItem Content="Square"/>
+                Height="Auto" />
+            <ComboBox Margin="2,2,2,2" SelectedValue="{Binding MappingFuncString, Mode=TwoWay}"
+                      SelectedValuePath="Content">
+                <ComboBoxItem Content="Squareroot" />
+                <ComboBoxItem Content="Logarithm" />
+                <ComboBoxItem Content="Linear" />
+                <ComboBoxItem Content="Square" />
             </ComboBox>
-            <Button 
+            <Button
                 Content="Render"
                 FontSize="14"
                 Command="{Binding RenderCommand}"
                 Margin="5"
-                Height="40"/>
+                Height="40" />
             <TextBlock Text="{Binding StatusText}" Margin="2,2,2,2" />
         </StackPanel>
 
-        <Rectangle Stroke="Black" StrokeThickness="2" Grid.Column="1" Margin="2,2,2,2"/>
+        <Rectangle Stroke="Black" StrokeThickness="2" Grid.Column="1" Margin="2,2,2,2" />
 
         <Image
             Margin="2,2,2,2"
             Grid.Column="0"
-            x:Name="renderImage"
+            x:Name="RenderImage"
             Source="{Binding CurrentBitmap}"
-            Stretch="None"/>
+            Stretch="None" />
 
-        <Canvas Margin="2,2,2,2" x:Name="selectionCanvas">
-            <Rectangle x:Name="selectionBox" Stroke="#BF0051FF" Visibility="Collapsed" StrokeThickness="1" Fill="#BF008080"/>
+        <Canvas Grid.Column="0" Margin="2,2,2,2" x:Name="SelectionCanvas">
+            <Rectangle x:Name="SelectionBox" Stroke="#BF0051FF" Visibility="Collapsed" StrokeThickness="1"
+                       Fill="#BF008080" />
         </Canvas>
     </Grid>
 </Window>

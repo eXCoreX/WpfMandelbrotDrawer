@@ -1,141 +1,123 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using WpfMandelbrotDrawer.Models;
+using System.Windows.Input;
 using WpfMandelbrotDrawer.ViewModels;
 
 namespace WpfMandelbrotDrawer.Views
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    ///     Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
-        private bool DrawSelectionBox { get;  set; }
-        private Point MouseDownPos { get;  set; }
-
-        private void Image_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        public MainWindow()
         {
-            Point mousePos = e.GetPosition(outerGrid);
-            var l = renderImage.TranslatePoint(new Point(0, 0), outerGrid);
+            InitializeComponent();
+        }
 
-            if (mousePos.X < l.X)
-            {
-                return;
-            }
+        private bool DrawSelectionBox { get; set; }
+        private Point MouseDownPos { get; set; }
+
+        private void Image_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var mousePos = e.GetPosition(OuterGrid);
+            var l = RenderImage.TranslatePoint(new Point(0, 0), OuterGrid);
+
+            if (mousePos.X < l.X) return;
             // Capture and track the mouse.
             DrawSelectionBox = true;
-            MouseDownPos = e.GetPosition(outerGrid);
-            outerGrid.CaptureMouse();
+            MouseDownPos = e.GetPosition(OuterGrid);
+            OuterGrid.CaptureMouse();
 
             // Initial placement of the drag selection box.         
-            Canvas.SetLeft(selectionBox, MouseDownPos.X);
-            Canvas.SetTop(selectionBox, MouseDownPos.Y);
-            selectionBox.Width = 0;
-            selectionBox.Height = 0;
+            Canvas.SetLeft(SelectionBox, MouseDownPos.X);
+            Canvas.SetTop(SelectionBox, MouseDownPos.Y);
+            SelectionBox.Width = 0;
+            SelectionBox.Height = 0;
 
             // Make the drag selection box visible.
-            selectionBox.Visibility = Visibility.Visible;
+            SelectionBox.Visibility = Visibility.Visible;
         }
 
-        private async void Image_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private async void Image_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (!DrawSelectionBox)
-            {
-                return;
-            }
+            if (!DrawSelectionBox) return;
             // Release the mouse capture and stop tracking it.
             DrawSelectionBox = false;
-            outerGrid.ReleaseMouseCapture();
+            OuterGrid.ReleaseMouseCapture();
 
             // Hide the drag selection box.
-            selectionBox.Visibility = Visibility.Collapsed;
-            var l = renderImage.TranslatePoint(new Point(0, 0), outerGrid);
-            Point mouseUpPos = e.GetPosition(outerGrid);
+            SelectionBox.Visibility = Visibility.Collapsed;
+            var l = RenderImage.TranslatePoint(new Point(0, 0), OuterGrid);
+            var mouseUpPos = e.GetPosition(OuterGrid);
 
-            if (mouseUpPos.X < l.X || mouseUpPos.X > (l.X + renderImage.ActualWidth))
-            {
-                return;
-            }
+            if (mouseUpPos.X < l.X || mouseUpPos.X > l.X + RenderImage.ActualWidth) return;
 
-            var dc = DataContext as MandelbrotViewModel;
 
-            if (dc.CanRender())
-            {
-                Point TopLeft = selectionBox.TranslatePoint(new Point(0, 0), renderImage);
-                Point DownRight = TopLeft;
-                DownRight.X += selectionBox.Width;
-                DownRight.Y += selectionBox.Height;
+            if (!(DataContext is MandelbrotViewModel dc) || !dc.CanRender()) return;
+            var topLeft = SelectionBox.TranslatePoint(new Point(0, 0), RenderImage);
+            var downRight = topLeft;
+            downRight.X += SelectionBox.Width;
+            downRight.Y += SelectionBox.Height;
 
-                var oldL = dc.LeftEdge;
-                var oldR = dc.RightEdge;
-                var oldD = dc.BottomEdge;
-                var oldU = dc.UpperEdge;
+            var oldL = dc.LeftEdge;
+            var oldR = dc.RightEdge;
+            var oldD = dc.BottomEdge;
+            var oldU = dc.UpperEdge;
 
-                var newL = oldL + (oldR - oldL) * TopLeft.X / dc.CurrentBitmap.PixelWidth * MandelbrotViewModel.DpiScale;
-                var newR = oldL + (oldR - oldL) * DownRight.X / dc.CurrentBitmap.PixelWidth * MandelbrotViewModel.DpiScale;
-                var newU = oldU - (oldU - oldD) * TopLeft.Y / dc.CurrentBitmap.PixelHeight * MandelbrotViewModel.DpiScale;
-                var newD = oldU - (oldU - oldD) * DownRight.Y / dc.CurrentBitmap.PixelHeight * MandelbrotViewModel.DpiScale;
-                dc.LeftEdge = newL;
-                dc.RightEdge = newR;
-                dc.UpperEdge = newU;
-                dc.BottomEdge = newD;
-            
-                await dc.ExecuteRender();
-            }
+            var newL = oldL + (oldR - oldL) * topLeft.X / dc.CurrentBitmap.PixelWidth *
+                MandelbrotViewModel.DpiScale;
+            var newR = oldL + (oldR - oldL) * downRight.X / dc.CurrentBitmap.PixelWidth *
+                MandelbrotViewModel.DpiScale;
+            var newU = oldU - (oldU - oldD) * topLeft.Y / dc.CurrentBitmap.PixelHeight *
+                MandelbrotViewModel.DpiScale;
+            var newD = oldU - (oldU - oldD) * downRight.Y / dc.CurrentBitmap.PixelHeight *
+                MandelbrotViewModel.DpiScale;
+            dc.LeftEdge = newL;
+            dc.RightEdge = newR;
+            dc.UpperEdge = newU;
+            dc.BottomEdge = newD;
+
+            await dc.ExecuteRender();
         }
 
-        private void Image_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        private void Image_MouseMove(object sender, MouseEventArgs e)
         {
             if (DrawSelectionBox)
             {
-                Point mousePos = e.GetPosition(outerGrid);
-                var l = renderImage.TranslatePoint(new Point(0, 0), outerGrid);
+                var mousePos = e.GetPosition(OuterGrid);
+                var l = RenderImage.TranslatePoint(new Point(0, 0), OuterGrid);
 
-                if (mousePos.X < l.X || mousePos.X > (l.X + renderImage.ActualWidth))
+                if (mousePos.X < l.X || mousePos.X > l.X + RenderImage.ActualWidth)
                 {
                     DrawSelectionBox = false;
-                    outerGrid.ReleaseMouseCapture();
-                    selectionBox.Visibility = Visibility.Collapsed;
+                    OuterGrid.ReleaseMouseCapture();
+                    SelectionBox.Visibility = Visibility.Collapsed;
                     return;
                 }
 
                 if (MouseDownPos.X < mousePos.X)
                 {
-                    Canvas.SetLeft(selectionBox, MouseDownPos.X);
-                    selectionBox.Width = mousePos.X - MouseDownPos.X;
+                    Canvas.SetLeft(SelectionBox, MouseDownPos.X);
+                    SelectionBox.Width = mousePos.X - MouseDownPos.X;
                 }
                 else
                 {
-                    Canvas.SetLeft(selectionBox, mousePos.X);
-                    selectionBox.Width = MouseDownPos.X - mousePos.X;
+                    Canvas.SetLeft(SelectionBox, mousePos.X);
+                    SelectionBox.Width = MouseDownPos.X - mousePos.X;
                 }
 
                 if (MouseDownPos.Y < mousePos.Y)
                 {
-                    Canvas.SetTop(selectionBox, MouseDownPos.Y);
-                    selectionBox.Height = mousePos.Y - MouseDownPos.Y;
+                    Canvas.SetTop(SelectionBox, MouseDownPos.Y);
+                    SelectionBox.Height = mousePos.Y - MouseDownPos.Y;
                 }
                 else
                 {
-                    Canvas.SetTop(selectionBox, mousePos.Y);
-                    selectionBox.Height = MouseDownPos.Y - mousePos.Y;
+                    Canvas.SetTop(SelectionBox, mousePos.Y);
+                    SelectionBox.Height = MouseDownPos.Y - mousePos.Y;
                 }
             }
-        }
-        
-
-        public MainWindow()
-        {
-            InitializeComponent();
         }
 
         private void MandelWindow_Loaded(object sender, RoutedEventArgs e)

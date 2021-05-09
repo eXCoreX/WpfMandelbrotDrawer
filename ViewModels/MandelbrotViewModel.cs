@@ -1,170 +1,189 @@
-﻿using System;
-using System.Linq;
-using System.Numerics;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 using WpfMandelbrotDrawer.Commands;
 using WpfMandelbrotDrawer.Models;
-
-using static System.Math;
-using static System.Numerics.BigRational;
 
 namespace WpfMandelbrotDrawer.ViewModels
 {
     public class MandelbrotViewModel : BaseViewModel
     {
-        private static readonly int renderWidth = 1600;
-        private static readonly int renderHeight = 900;
+        private static readonly int RenderWidth;
+        private static readonly int RenderHeight;
         public static readonly double DpiScale = VisualTreeHelper.GetDpi(new ContainerVisual()).DpiScaleX;
 
-        private readonly MandelbrotRenderer mRenderer = new MandelbrotRenderer(renderWidth, renderHeight);
+        private readonly MandelbrotRenderer _mRenderer;
 
-        private WriteableBitmap _CurrentBitmap;
+        private double _bottomEdge;
+
+        private WriteableBitmap _currentBitmap;
+
+        private double _leftEdge;
+
+        private string _mappingFuncString = "Linear";
+
+        private int _maxIters = 20;
+
+        private double _rightEdge;
+
+        private string _statusText = "";
+
+        private int _subdivision = 1;
+
+        private double _upperEdge;
+
+        static MandelbrotViewModel()
+        {
+            var rect = SystemParameters.WorkArea;
+            RenderWidth = (int) (rect.Width * 0.8 * DpiScale);
+            RenderHeight = RenderWidth * 9 / 16;
+        }
+
+        public MandelbrotViewModel()
+        {
+            _mRenderer = new MandelbrotRenderer(RenderWidth, RenderHeight);
+            CurrentBitmap = new WriteableBitmap(RenderWidth, RenderHeight, 96 * DpiScale, 96 * DpiScale,
+                PixelFormats.Bgra32, null);
+            var pixels = from x in Enumerable.Range(0, RenderWidth * RenderHeight)
+                from x2 in new byte[] {0x00, 0xFF, 0x00, 0xFF}
+                select x2;
+            var pixelArray = pixels.ToArray();
+            CurrentBitmap.WritePixels(new Int32Rect(0, 0, RenderWidth, RenderHeight), pixelArray, RenderWidth * 4, 0);
+            StatusText = "Ready";
+            LeftEdge = -2;
+            BottomEdge = -1;
+            RightEdge = 1;
+            UpperEdge = 1;
+
+            RenderCommand = new RelayCommand(async o => await ExecuteRender(), o => CanRender());
+            ResetEverythingCommand = new RelayCommand(async o => await ResetEverything(), o => CanRender());
+            ResetViewCommand = new RelayCommand(async o => await ResetView(), o => CanRender());
+        }
+
         public WriteableBitmap CurrentBitmap
         {
-            get
-            {
-                return _CurrentBitmap ?? new WriteableBitmap(1, 1, 96 * DpiScale, 96 * DpiScale, PixelFormats.Bgra32, null);
-            }
+            get => _currentBitmap ?? new WriteableBitmap(1, 1, 96 * DpiScale, 96 * DpiScale, PixelFormats.Bgra32, null);
             private set
             {
-                _CurrentBitmap = value;
+                _currentBitmap = value;
                 OnPropertyChanged(nameof(CurrentBitmap));
             }
         }
 
-        private int _Subdivision = 1;
         public int Subdivision
         {
-            get { return _Subdivision; }
+            get => _subdivision;
             set
             {
-                _Subdivision = value;
+                _subdivision = value;
                 OnPropertyChanged(nameof(Subdivision));
             }
         }
 
-        private int _MaxIters = 20;
         public int MaxIters
         {
-            get { return _MaxIters; }
+            get => _maxIters;
             set
             {
-                _MaxIters = value;
+                _maxIters = value;
                 OnPropertyChanged(nameof(MaxIters));
             }
         }
 
-        private string _StatusText = "";
         public string StatusText
         {
-            get
-            {
-                return _StatusText ?? "";
-            }
+            get => _statusText ?? "";
             set
             {
-                _StatusText = value;
+                _statusText = value;
                 CommandManager.InvalidateRequerySuggested();
                 OnPropertyChanged(nameof(StatusText));
             }
         }
 
-        private Double _LeftEdge = 0.0;
-        public Double LeftEdge
+        public double LeftEdge
         {
-            get { return _LeftEdge; }
+            get => _leftEdge;
             set
             {
-                _LeftEdge = value;
+                _leftEdge = value;
                 OnPropertyChanged(nameof(LeftEdge));
             }
         }
 
-        private Double _RightEdge = 0.0;
-        public Double RightEdge
+        public double RightEdge
         {
-            get { return _RightEdge; }
+            get => _rightEdge;
             set
             {
-                _RightEdge = value;
+                _rightEdge = value;
                 OnPropertyChanged(nameof(RightEdge));
             }
         }
 
-        private Double _BottomEdge = 0.0;
-        public Double BottomEdge
+        public double BottomEdge
         {
-            get { return _BottomEdge; }
+            get => _bottomEdge;
             set
             {
-                _BottomEdge = value;
+                _bottomEdge = value;
                 OnPropertyChanged(nameof(BottomEdge));
             }
         }
 
-        private Double _UpperEdge = 0.0;
-        public Double UpperEdge
+        public double UpperEdge
         {
-            get { return _UpperEdge; }
+            get => _upperEdge;
             set
             {
-                _UpperEdge = value;
+                _upperEdge = value;
                 OnPropertyChanged(nameof(UpperEdge));
             }
         }
 
-        enum MappingFuncs
-        {
-            Squareroot = 0,
-            Log,
-            Linear,
-            Square
-        }
-
-        private string _MappingFuncString = "Linear";
         public string MappingFuncString
         {
-            get { return _MappingFuncString; }
+            get => _mappingFuncString;
             set
             {
-                _MappingFuncString = value;
+                _mappingFuncString = value;
                 switch (value)
                 {
                     case string a when a.Contains("Squareroot"):
-                        mRenderer.SetMappingFunc(MandelbrotRenderer.MappingFuncsEnum.Squareroot);
+                        _mRenderer.SetMappingFunc(MandelbrotRenderer.MappingFuncsEnum.Squareroot);
                         break;
                     case string a when a.Contains("Logarithm"):
-                        mRenderer.SetMappingFunc(MandelbrotRenderer.MappingFuncsEnum.Log);
+                        _mRenderer.SetMappingFunc(MandelbrotRenderer.MappingFuncsEnum.Log);
                         break;
                     case string a when a.Contains("Square"):
-                        mRenderer.SetMappingFunc(MandelbrotRenderer.MappingFuncsEnum.Square);
+                        _mRenderer.SetMappingFunc(MandelbrotRenderer.MappingFuncsEnum.Square);
                         break;
                     default:
-                        mRenderer.SetMappingFunc(MandelbrotRenderer.MappingFuncsEnum.Linear);
+                        _mRenderer.SetMappingFunc(MandelbrotRenderer.MappingFuncsEnum.Linear);
                         break;
                 }
+
                 OnPropertyChanged(nameof(MappingFuncString));
             }
         }
 
-        public RelayCommand RenderCommand { get; private set; }
+        public RelayCommand RenderCommand { get; }
 
-        public RelayCommand ResetEverythingCommand { get; private set; }
+        public RelayCommand ResetEverythingCommand { get; }
 
-        public RelayCommand ResetViewCommand { get; private set; }
+        public RelayCommand ResetViewCommand { get; }
 
         private WriteableBitmap RenderSet()
         {
-            WriteableBitmap bmp = new WriteableBitmap(renderWidth, renderHeight, 96 * DpiScale, 96 * DpiScale, PixelFormats.Bgra32, null);
+            var bmp = new WriteableBitmap(RenderWidth, RenderHeight, 96 * DpiScale, 96 * DpiScale, PixelFormats.Bgra32,
+                null);
 
-            byte[] pixelArray = mRenderer.RenderSet(LeftEdge, RightEdge, UpperEdge, BottomEdge, Subdivision, MaxIters);
+            var pixelArray = _mRenderer.RenderSet(LeftEdge, RightEdge, UpperEdge, BottomEdge, Subdivision, MaxIters);
 
-            bmp.WritePixels(new Int32Rect(0, 0, renderWidth, renderHeight), pixelArray, renderWidth * 4, 0);
+            bmp.WritePixels(new Int32Rect(0, 0, RenderWidth, RenderHeight), pixelArray, RenderWidth * 4, 0);
             bmp.Freeze();
             return bmp;
         }
@@ -173,37 +192,13 @@ namespace WpfMandelbrotDrawer.ViewModels
         {
             StatusText = "Waiting...";
             CurrentBitmap.Freeze();
-            CurrentBitmap = await Task.Run(() => RenderSet());
+            CurrentBitmap = await Task.Run(RenderSet);
             StatusText = "Ready";
         }
 
         public bool CanRender()
         {
             return StatusText == "Ready";
-        }
-
-        static MandelbrotViewModel()
-        {
-            var rect = SystemParameters.WorkArea;
-            renderWidth = (int)(rect.Width * 0.8 * DpiScale);
-            renderHeight = renderWidth * 9 / 16;
-        }
-
-        public MandelbrotViewModel()
-        {
-            mRenderer = new MandelbrotRenderer(renderWidth, renderHeight);
-            CurrentBitmap = new WriteableBitmap(renderWidth, renderHeight, 96 * DpiScale, 96 * DpiScale, PixelFormats.Bgra32, null);
-            var pixels = from x in Enumerable.Range(0, renderWidth * renderHeight)
-                         from x2 in new byte[] { 0x00, 0xFF, 0x00, 0xFF }
-                         select x2;
-            var pixelArray = pixels.ToArray();
-            CurrentBitmap.WritePixels(new Int32Rect(0, 0, renderWidth, renderHeight), pixelArray, renderWidth * 4, 0);
-            StatusText = "Ready";
-            LeftEdge = -2; BottomEdge = -1; RightEdge = 1; UpperEdge = 1;
-
-            RenderCommand = new RelayCommand(async o => await ExecuteRender(), o => CanRender());
-            ResetEverythingCommand = new RelayCommand(async o => await ResetEverything(), o => CanRender());
-            ResetViewCommand = new RelayCommand(async o => await ResetView(), o => CanRender());
         }
 
         private async Task ResetEverything()
